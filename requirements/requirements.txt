@@ -1,1 +1,4 @@
 boto3==1.24.35
+inquirerpy==0.3.4
+rich==12.5.1
+typer==0.6.1

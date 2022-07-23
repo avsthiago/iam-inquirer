@@ -1,10 +1,15 @@
 from typing import Dict, List
+from rich.console import Console
+from rich.progress import track
 import boto3
-import pprint
+import json
+from rich import print_json
 
 
 class AWSIamInteractor:
-    def __init__(self, role_name: str) -> None:
+    def __init__(self, role_name: str, verbose: bool = False) -> None:
+        self.console = Console()
+        self.verbose = verbose
         self.iam = boto3.client("iam")
         self.role_name = role_name
         self.role = self._get_role(self.role_name)
@@ -12,7 +17,6 @@ class AWSIamInteractor:
         self.role_with_policies = self._create_role_with_policies(
             self.role, self.policies
         )
-        pprint.pprint(self.role_with_policies)
 
     def _create_role_with_policies(
         self, role: Dict[str, str], policies: List[Dict[str, str]]
@@ -22,8 +26,11 @@ class AWSIamInteractor:
         return role_with_policies
 
     def _get_role(self, role_name: str) -> Dict[str, str]:
-        role = self.iam.get_role(RoleName=role_name)
-        return self._filter_role_attributes(role["Role"])
+        with self.console.status("[bold]Fetching role..."):
+            role = self.iam.get_role(RoleName=role_name)
+            role = self._filter_role_attributes(role["Role"])
+        self._console_print("[bold green]Role fetched.")
+        return role
 
     def _filter_role_attributes(
         self, role: Dict[str, str], keys: List[str] = None
@@ -35,10 +42,15 @@ class AWSIamInteractor:
     def _get_role_policies(self, role_name: str) -> List[Dict[str, str]]:
         attached_policies = self._get_attached_policies(role_name)
         policies = []
-        for attached_policy in attached_policies:
+        for attached_policy in track(
+            attached_policies, description="Downloading policies...", transient=True
+        ):
             policy = self._add_description_and_version_to_policy(attached_policy)
             policy = self._add_policy_statement_to_policy(policy)
             policies.append(policy)
+        self._console_print(
+            f"[bold green]{len(attached_policies)} Policies downloaded."
+        )
         return policies
 
     def _get_attached_policies(self, role_name: str) -> List[Dict[str, str]]:
@@ -70,5 +82,36 @@ class AWSIamInteractor:
     ) -> Dict[str, str]:
         return {key: dictionary[key] for key in keys}
 
+    def _console_print(self, message: str) -> None:
+        if self.verbose:
+            self.console.print(message)
+
+    def show(self) -> None:
+        self.role_with_policies["a"] = "[bold green] test"
+        print_json(json.dumps(self.role_with_policies))
+
+    def search(self) -> None:
+        from rich.json import JSON
+        json_renderable = JSON.from_data(json.dumps(self.role_with_policies),
+                indent=2,
+                highlight=False,
+                skip_keys=False,
+                ensure_ascii=True,
+                check_circular=True,
+                allow_nan=True,
+                default=None,
+                sort_keys=False)
+        print('a')
+        roles = json.dumps(self.role_with_policies, indent=2)
+        print('roles')
+        from rich.text import Text
+        tex = Text(json.dumps(self.role_with_policies, indent=2))
+        tex.highlight_words(["List"], style="magenta")
+        self.console.print(tex)
+
+        
+
 
 aws_iam_interactor = AWSIamInteractor("eksworkshop-admin")
+aws_iam_interactor.search()
+
