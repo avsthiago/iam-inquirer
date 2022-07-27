@@ -1,0 +1,11 @@
+[tool.black]
+line-lenght = 120
+
+[tool.pytest.ini_options]
+python_files = "*_tests.py"
+python_classes = "*Test"
+junity_family = "xunit2"
+addops = "-s"
+cache_dir = "target/pytest/cache"
+testpaths = "tests"
+log_cli = "True"
