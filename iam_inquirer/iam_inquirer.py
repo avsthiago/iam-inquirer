@@ -92,26 +92,27 @@ class AWSIamInteractor:
 
     def search(self) -> None:
         from rich.json import JSON
-        json_renderable = JSON.from_data(json.dumps(self.role_with_policies),
-                indent=2,
-                highlight=False,
-                skip_keys=False,
-                ensure_ascii=True,
-                check_circular=True,
-                allow_nan=True,
-                default=None,
-                sort_keys=False)
-        print('a')
+
+        json_renderable = JSON.from_data(
+            json.dumps(self.role_with_policies),
+            indent=2,
+            highlight=False,
+            skip_keys=False,
+            ensure_ascii=True,
+            check_circular=True,
+            allow_nan=True,
+            default=None,
+            sort_keys=False,
+        )
+        print("a")
         roles = json.dumps(self.role_with_policies, indent=2)
-        print('roles')
+        print("roles")
         from rich.text import Text
+
         tex = Text(json.dumps(self.role_with_policies, indent=2))
         tex.highlight_words(["List"], style="magenta")
         self.console.print(tex)
 
-        
-
 
 aws_iam_interactor = AWSIamInteractor("eksworkshop-admin")
 aws_iam_interactor.search()
-
